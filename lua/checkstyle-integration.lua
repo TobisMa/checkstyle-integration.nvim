@@ -1,6 +1,12 @@
 local M = {};
 
-function M.setup(opts) 
+function M.setup(opts)
+    if opts.checkstyle_file == nil then
+        print("No checkstyle file found")
+        return
+    end
+
+    M.checkstyle_file = opts.checkstyle_file;
     opts = opts or {};
     if opts.keybind ~= nil then
         vim.keymap.set(opts.keybind.modes or {"n"}, opts.keybind.keys, "<CMD>Jcheck<CR>", opts.keybind.options);
@@ -8,18 +14,21 @@ function M.setup(opts)
 
     if opts.checkstyle_on_write then
         vim.api.nvim_create_autocmd("BufWritePost", {
-            desc="Run checkstyle on save",
-            group=vim.api.nvim_create_augroup("java-checkstyle-on-save", {clear=true}),
-            pattern={"*.java"},
-            callback=M.java_checkstyle
+            desc = "Run checkstyle on save",
+            group = vim.api.nvim_create_augroup("java-checkstyle-on-save", {clear=true}),
+            pattern = {"*.java"},
+            callback = M.java_checkstyle
         })
     end
+
+    vim.api.nvim_create_user_command("Jcheck", M.java_checkstyle, {})
 end
 
 
 function M.java_checkstyle()
     -- TODO use vim.system() for not blocking
-    local output = vim.fn.system({"checkstyle", "-f=plain", "-c", vim.g.checkstyle_file, vim.fn.expand("%")});
+
+    local output = vim.fn.system({"checkstyle", "-f=plain", "-c", M.checkstyle_file, vim.fn.expand("%")});
     local namespace = vim.api.nvim_create_namespace("checkstyle")
     local diagnostics = {};
     local severity, line_n, line_col, message, d, line_count;
@@ -29,7 +38,7 @@ function M.java_checkstyle()
             goto continue
         end
         line_count = line_count + 1;
-        -- _, _, severity = string.find(line, "%[(.-)%]")
+        _, _, severity = string.find(line, "%[(.-)%]")
         _, _, line_n = string.find(line, ":(%d+):")
         _, _, line_col = string.find(line, ":%d+:(%d+):")
         _, _, message = string.find(line, ":%d+: ([^ ].*)")
@@ -80,4 +89,5 @@ function M.java_checkstyle()
         vim.o.cmdheight = old_cmd_height;
     end
 end
+
 return M;
