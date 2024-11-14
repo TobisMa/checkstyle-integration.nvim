@@ -5,23 +5,22 @@ Plugin with checkstyle integration for neovim
 1. Download `checkstyle` from the AUR. For example by using `yay -S checkstyle`
 2. Set options in your package manager.
 
-    For example in Lazy
-    ```lua
+For example in Lazy.nvim add following to your plugins and correct the path
+```lua
 {
     "TobisMa/checkstyle-integration.nvim",
     opts = {
-        checkstyle_file = "/home/tobisma/.java-checkstyle/checkstyle.xml",
-        checkstyle_on_write = true,
+        checkstyle_file = "<your path to the checkstyle file>",
+        checkstyle_on_write = false,  -- or true, but it may lag
     },
 },
-    ```
-
-    NOTE: if `checkstyle_file` is not set, this plugin will not create user and auto commands.
+```
+NOTE: if `checkstyle_file` is not set, this plugin will not create user and auto commands.
 
 ## How to use
 ### User command
 `Jcheck` is the given user command to trigger checkstyle.
 
 ### Auto commands
-if `vim.g.checkstyle_on_write` is set to true, then checkstyle diagnostics will appear on writes in the current buffer
+if `checkstyle_on_write` is set to true, then checkstyle diagnostics will appear on writes in the current buffer additionally to the user command
 
