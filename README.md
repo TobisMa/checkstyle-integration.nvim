@@ -12,6 +12,9 @@ For example in Lazy.nvim add following to your plugins and correct the path
     opts = {
         checkstyle_file = "<your path to the checkstyle file>",
         checkstyle_on_write = false,  -- or true, but it may lag
+        alwaysUseDefaultSeverity = false,  -- will always use the default severity or its default. if false, severity will be infered
+        defaultSeverity = "ERROR"  -- possibly "ERROR", "WARN", "INFO"
+
     },
 },
 ```

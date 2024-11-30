@@ -12,6 +12,15 @@ function M.setup(opts)
         vim.keymap.set(opts.keybind.modes or {"n"}, opts.keybind.keys, "<CMD>Jcheck<CR>", opts.keybind.options);
     end
 
+    if opts.defaultSeverity ~= nil then
+        M.defaultSeverity = opts.defaultSeverity;
+    end
+    if opts.alwaysUseDefaultSeverity == true then
+        M.alwaysUseDefaultSeverity = true;
+    else
+        M.alwaysUseDefaultSeverity = false;
+    end
+
     if opts.checkstyle_on_write then
         vim.api.nvim_create_autocmd("BufWritePost", {
             desc = "Run checkstyle on save",
@@ -43,12 +52,23 @@ function M.java_checkstyle()
         _, _, line_col = string.find(line, ":%d+:(%d+):")
         _, _, message = string.find(line, ":%d+: ([^ ].*)")
 
+        if M.alwaysUseDefaultSeverity then
+            severity = M.defaultSeverity or "ERROR";
+        end
+
+        -- convert severity to vim diagnostic
+        local diagnosticSeverity = vim.diagnostic.severity.ERROR;
+        if severity == "INFO" then
+            diagnosticSeverity = vim.diagnostic.severity.INFO
+        elseif severity == "WARN" then
+            diagnosticSeverity = vim.diagnostic.severity.WARN;
+        end
 
         d = {
             bufnr = 0,
             lnum = tonumber(line_n) - 1,
             end_lnum = tonumber(line_n) - 1,
-            severity = vim.diagnostic.severity.ERROR,
+            severity = diagnosticSeverity,
             message = message,
             source = "checkstyle",
             namespace = namespace
