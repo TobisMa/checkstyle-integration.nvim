@@ -49,8 +49,8 @@ function M.java_checkstyle()
                 vim.notify("Code " .. code .. "; Signal " .. signal, vim.diagnostic.severity.WARN)
             end
     end)
-
     if not handle then
+        print("Handle unexpected close")
         stdin:close()
         stdout:close()
         stderr:close()
@@ -59,6 +59,7 @@ function M.java_checkstyle()
 
     uv.read_start(stdout, function (err, data)
         if err then
+            print(err)
             -- TODO
         elseif data then
             output = output .. data
@@ -132,6 +133,7 @@ function M._convert_checkstyle_output_to_diagnostic(namespace, output)
         table.insert(diagnostics, d)
         ::continue::
     end
+
     return {diagnostics=diagnostics, line_count=line_count}
 end
 

@@ -11,7 +11,7 @@ For example in Lazy.nvim add following to your plugins and correct the path
     "TobisMa/checkstyle-integration.nvim",
     opts = {
         checkstyle_file = "<your path to the checkstyle file>",
-        checkstyle_on_write = false,  -- or true, but it may lag
+        checkstyle_on_write = true
     },
 },
 ```
@@ -19,8 +19,8 @@ NOTE: if `checkstyle_file` is not set, this plugin will not create user and auto
 
 ## How to use
 ### User command
-`Jcheck` is the given user command to trigger checkstyle.
+`Jcheck` is the given user command to trigger checkstyle. Make sure the file is saved before using it
 
 ### Auto commands
-if `checkstyle_on_write` is set to true, then checkstyle diagnostics will appear on writes in the current buffer additionally to the user command
+if `checkstyle_on_write` is set to true, then checkstyle diagnostics will appear on writes in the current buffer. Otherwise, the user command `Jcheck` has to be used to update the checkstyle analysis
 
