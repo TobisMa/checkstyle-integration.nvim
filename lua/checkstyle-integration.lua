@@ -40,13 +40,15 @@ function M.java_checkstyle()
     local output = ""
 
     handle, pid_or_err = uv.spawn("checkstyle", {
-        args = {"-f=plain", "-c", M.checkstyle_file, vim.fn.expand("%")},
+        args = {"-f=plain", "-c", vim.fn.expand(M.checkstyle_file), vim.fn.expand("%")},
         cwd = vim.fn.getcwd(),
         hide = vim.fn.has("win32") == 1,
         stdio = {stdin, stdout, stderr}
     }, function (code, signal)
             if code ~= 0 and code ~= 1 then
-                vim.notify("Code " .. code .. "; Signal " .. signal, vim.diagnostic.severity.WARN)
+                vim.schedule(function ()
+                    vim.notify("Code " .. code .. "; Signal " .. signal, vim.diagnostic.severity.WARN)
+                end)
             end
     end)
     if not handle then
