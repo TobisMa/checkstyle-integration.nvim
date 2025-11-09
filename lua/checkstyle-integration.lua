@@ -1,34 +1,40 @@
 local M = {};
 
-local uv = vim.uv;
+local uv = vim.uv
+local DIAGNOSTIC_MAP = {
+    IGNORE = vim.diagnostic.severity.INFO,
+    INFO = vim.diagnostic.severity.HINT,
+    WARN = vim.diagnostic.severity.WARN,
+    ERROR = vim.diagnostic.severity.ERROR,
+}
 
 function M.setup(opts)
     if opts.checkstyle_file == nil then
-        print("No checkstyle file found")
+        print("No checkstyle file set")
         return
     end
 
     M.checkstyle_file = opts.checkstyle_file;
     opts = opts or {};
     if opts.keybind ~= nil then
-        vim.keymap.set(opts.keybind.modes or {"n"}, opts.keybind.keys, "<CMD>Jcheck<CR>", opts.keybind.options);
+        vim.keymap.set(opts.keybind.modes or { "n" }, opts.keybind.keys, "<CMD>Jcheck<CR>", opts.keybind.options);
     end
+
+    M.force_severity = opts.force_severity
 
     if opts.checkstyle_on_write then
         vim.api.nvim_create_autocmd("BufWritePost", {
             desc = "Run checkstyle on save",
-            group = vim.api.nvim_create_augroup("java-checkstyle-on-save", {clear=true}),
-            pattern = {"*.java"},
-            callback = M.java_checkstyle
+            group = vim.api.nvim_create_augroup("java-checkstyle-on-save", { clear = true }),
+            callback = M.java_checkstyle,
+            buffer = 0
         })
     end
 
     vim.api.nvim_create_user_command("Jcheck", M.java_checkstyle, {})
 end
 
-
 function M.java_checkstyle()
-
     local namespace = vim.api.nvim_create_namespace("checkstyle")
     local handle;
     local pid_or_err;
@@ -40,16 +46,16 @@ function M.java_checkstyle()
     local output = ""
 
     handle, pid_or_err = uv.spawn("checkstyle", {
-        args = {"-f=plain", "-c", vim.fn.expand(M.checkstyle_file), vim.fn.expand("%")},
+        args = { "-f=plain", "-c", vim.fn.expand(M.checkstyle_file), vim.fn.expand("%") },
         cwd = vim.fn.getcwd(),
         hide = vim.fn.has("win32") == 1,
-        stdio = {stdin, stdout, stderr}
-    }, function (code, signal)
-            if code ~= 0 and code ~= 1 then
-                vim.schedule(function ()
-                    vim.notify("Code " .. code .. "; Signal " .. signal, vim.diagnostic.severity.WARN)
-                end)
-            end
+        stdio = { stdin, stdout, stderr }
+    }, function(code, signal)
+        if code ~= 0 and code ~= 1 then
+            vim.schedule(function()
+                vim.notify("Code " .. code .. "; Signal " .. signal, vim.diagnostic.severity.WARN)
+            end)
+        end
     end)
     if not handle then
         print("Handle unexpected close")
@@ -59,7 +65,7 @@ function M.java_checkstyle()
         return
     end
 
-    uv.read_start(stdout, function (err, data)
+    uv.read_start(stdout, function(err, data)
         if err then
             print(err)
             -- TODO
@@ -69,7 +75,7 @@ function M.java_checkstyle()
             local result = M._convert_checkstyle_output_to_diagnostic(namespace, output)
             diagnostic_result = result.diagnostics
             line_count = result.line_count
-            vim.schedule(function ()
+            vim.schedule(function()
                 vim.diagnostic.set(
                     namespace,
                     0,
@@ -101,7 +107,6 @@ function M.java_checkstyle()
 end
 
 function M._convert_checkstyle_output_to_diagnostic(namespace, output)
-
     local diagnostics = {};
     local severity, line_n, line_col, message, d, line_count;
     line_count = 0
@@ -116,12 +121,13 @@ function M._convert_checkstyle_output_to_diagnostic(namespace, output)
         _, _, line_col = string.find(line, ":%d+:(%d+):")
         _, _, message = string.find(line, ":%d+: ([^ ].*)")
 
+        severity = DIAGNOSTIC_MAP[M.force_severity or severity]
 
         d = {
             bufnr = 0,
             lnum = tonumber(line_n) - 1,
             end_lnum = tonumber(line_n) - 1,
-            severity = vim.diagnostic.severity.ERROR,
+            severity = severity,
             message = message,
             source = "checkstyle",
             namespace = namespace
@@ -136,7 +142,7 @@ function M._convert_checkstyle_output_to_diagnostic(namespace, output)
         ::continue::
     end
 
-    return {diagnostics=diagnostics, line_count=line_count}
+    return { diagnostics = diagnostics, line_count = line_count }
 end
 
 return M;
