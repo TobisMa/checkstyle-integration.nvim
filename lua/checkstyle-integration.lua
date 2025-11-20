@@ -21,13 +21,14 @@ function M.setup(opts)
     end
 
     M.force_severity = opts.force_severity
+    M.pattern = opts.pattern or { "*.java" }
 
     if opts.checkstyle_on_write then
         vim.api.nvim_create_autocmd("BufWritePost", {
             desc = "Run checkstyle on save",
             group = vim.api.nvim_create_augroup("java-checkstyle-on-save", { clear = true }),
             callback = M.java_checkstyle,
-            buffer = 0
+            pattern = M.pattern
         })
     end
 
